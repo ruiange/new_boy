@@ -6,6 +6,13 @@ on:
       - 'v*'
   workflow_dispatch:
 
+# 添加权限配置
+permissions:
+  contents: write
+  packages: write
+  issues: write
+  pull-requests: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -42,7 +49,7 @@ jobs:
     # 构建应用
     - name: Build application
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         npm run build
       
