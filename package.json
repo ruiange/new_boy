@@ -1,13 +1,13 @@
 {
   "name": "new_boy",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "微信机器人客户端",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win",
+    "build": "electron-builder --win --x64",
     "pack": "electron-builder --dir",
-    "make": "electron-builder --win"
+    "make": "electron-builder --win --x64"
   },
   "build": {
     "appId": "com.newboy.app",
@@ -16,7 +16,12 @@
       "output": "dist"
     },
     "win": {
-      "target": "nsis",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
       "icon": "assets/icon.ico"
     },
     "nsis": {

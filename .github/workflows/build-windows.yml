@@ -32,10 +32,14 @@ jobs:
     - name: Install dependencies
       run: |
         npm install
+        npm install -g electron-builder
         
     # 构建应用
     - name: Build application
-      run: npm run build
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        npm run build
         
     # 发布 Release
     - name: Create Release
@@ -43,8 +47,8 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: |
-          dist/*.exe
-          dist/*.msi
+          dist/**/*.exe
+          dist/**/*.msi
           WeChatSetup-3.9.11.25.exe
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
