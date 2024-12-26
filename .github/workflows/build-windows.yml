@@ -44,21 +44,19 @@ jobs:
     - name: Install dependencies
       run: |
         npm ci
-        npm install -g electron-builder
         
     # 显示环境信息
     - name: Show environment info
       run: |
-        node -v
-        npm -v
-        electron-builder -v
+        node --version
+        npm --version
       
     # 构建应用
     - name: Build application
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        npm run build
+        npx electron-builder --windows --x64
         
     # 列出构建产物
     - name: List build artifacts

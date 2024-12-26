@@ -5,9 +5,10 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win --x64",
+    "dev": "electron .",
+    "build": "electron-builder --windows --x64",
     "pack": "electron-builder --dir",
-    "make": "electron-builder --win --x64"
+    "make": "electron-builder --windows --x64"
   },
   "build": {
     "appId": "com.newboy.app",
