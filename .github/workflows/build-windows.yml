@@ -60,9 +60,9 @@ jobs:
           Write-Error "Build failed - dist directory not found"
           exit 1
         }
-        $exeFiles = Get-ChildItem -Path "dist" -Recurse -Filter "*.exe"
-        if ($exeFiles.Count -eq 0) {
-          Write-Error "No .exe files found in dist directory"
+        $setupFiles = Get-ChildItem -Path "dist" -Recurse -Filter "setup*.exe"
+        if ($setupFiles.Count -eq 0) {
+          Write-Error "No setup*.exe files found in dist directory"
           exit 1
         }
         
@@ -78,4 +78,4 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          dist/**/*.exe 
+          dist/**/setup*.exe 
