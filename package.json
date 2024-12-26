@@ -30,7 +30,10 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "新男孩",
-      "perMachine": false
+      "perMachine": false,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "artifactName": "setup-${version}.exe"
     },
     "files": [
       "**/*",
