@@ -2,9 +2,6 @@ name: Build Windows Installer
 
 on:
   push:
-    branches:
-      - main
-      - master
     tags:
       - 'v*'
   workflow_dispatch:
@@ -38,22 +35,14 @@ jobs:
       run: |
         npm run build
         
-    # 创建版本号（如果不是 tag 触发）
-    - name: Generate version
-      if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-      id: version
-      run: |
-        echo "version=$(date +'%Y.%m.%d.%H%M')" >> $GITHUB_OUTPUT
-      shell: bash
-        
     # 发布 Release
     - name: Create Release
       uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || steps.version.outputs.version }}
-        name: Release ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || steps.version.outputs.version }}
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
         draft: false
         prerelease: false
         files: |
