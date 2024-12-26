@@ -78,6 +78,4 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          dist/**/*.exe
-          dist/**/*.msi
-        fail_on_unmatched_files: true 
+          dist/**/*.exe 
