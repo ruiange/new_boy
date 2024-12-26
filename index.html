@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>若い男孩子 🤖</title>
+    <style>
+        body {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        #log-container {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px auto;
+            max-width: 800px;
+            height: 400px;
+            overflow-y: auto;
+        }
+
+        #log {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .status {
+            text-align: center;
+            color: #666;
+            margin-top: 10px;
+        }
+
+
+        /* 定义滚动条的整体部分 */
+        ::-webkit-scrollbar, .group-list::-webkit-scrollbar {
+            width: 1px; /* 滚动条的宽度 */
+        }
+
+        /* 定义滚动条的滑块部分 */
+        ::-webkit-scrollbar-thumb, .group-list::-webkit-scrollbar-thumb {
+            background-color: #888; /* 滑块的颜色 */
+            border-radius: 5px; /* 滑块的圆角 */
+        }
+
+        /* 定义滚动条的轨道部分 */
+        ::-webkit-scrollbar-track, .group-list::-webkit-scrollbar-track {
+            background-color: #f1f1f1; /* 轨道的颜色 */
+            border-radius: 5px; /* 轨道的圆角 */
+        }
+
+        /* 定义滚动条的按钮部分（可选） */
+        ::-webkit-scrollbar-button, .group-list::-webkit-scrollbar-button {
+            background-color: #ddd; /* 按钮的颜色 */
+        }
+
+        /* 定义滚动条的角落部分（可选） */
+        ::-webkit-scrollbar-corner, .group-list::-webkit-scrollbar-corner {
+            background-color: #eee; /* 角落的颜色 */
+        }
+
+    </style>
+</head>
+<body>
+<h1>小小机器人 🤖</h1>
+<div id="log-container">
+    <pre id="log"></pre>
+</div>
+<p class="status" id="status">等待消息中...</p>
+<script>
+    const {ipcRenderer} = require('electron');
+    const logContainer = document.getElementById('log-container');
+    const logElement = document.getElementById('log');
+    const statusElement = document.getElementById('status');
+
+    // 添加初始消息
+    logElement.textContent = "正在启动机器人...\n";
+
+    // 监听消息
+    ipcRenderer.on('log', (event, message) => {
+        try {
+            console.log('Received message:', message); // 调试用
+            logElement.textContent += message;
+            logContainer.scrollTop = logContainer.scrollHeight;
+            statusElement.textContent = "正在运行中...";
+        } catch (error) {
+            console.error('Error handling message:', error);
+        }
+    });
+
+    // 错误处理
+    window.onerror = function (message, source, lineno, colno, error) {
+        console.error('Window error:', message, error);
+        logElement.textContent += `\nError: ${message}\n`;
+        logContainer.scrollTop = logContainer.scrollHeight;
+    };
+</script>
+</body>
+</html> 

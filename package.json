@@ -1,0 +1,56 @@
+{
+  "name": "new-boy",
+  "version": "0.0.1",
+  "description": "微信机器人客户端",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win",
+    "pack": "electron-builder --dir"
+  },
+  "build": {
+    "appId": "com.newboy.app",
+    "productName": "新男孩",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "新男孩",
+      "perMachine": false
+    },
+    "files": [
+      "**/*",
+      "!.venv${/*}",
+      "!logs${/*}",
+      "!dist${/*}",
+      "!**/*.pyc"
+    ],
+    "extraResources": [
+      {
+        "from": "python",
+        "to": "app/python"
+      },
+      {
+        "from": "main.py",
+        "to": "app/main.py"
+      },
+      {
+        "from": "site-packages",
+        "to": "app/python/Lib/site-packages"
+      }
+    ],
+    "asar": false
+  },
+  "devDependencies": {
+    "electron": "^27.1.3",
+    "electron-builder": "^24.13.3"
+  }
+}
