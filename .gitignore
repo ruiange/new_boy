@@ -15,6 +15,7 @@ yarn-error.log*
 
 # Build
 dist/
+out/
 build/
 *.spec
 
@@ -54,3 +55,8 @@ Desktop.ini
 *.bak
 *.tmp
 *.temp 
+
+# 安装包
+*.exe
+*.msi
+*.msix 

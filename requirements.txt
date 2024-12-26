@@ -1,1 +1,1 @@
-wcferry==39.3.3
+wcferry==1.0.14
