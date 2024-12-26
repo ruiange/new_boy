@@ -1,12 +1,13 @@
 {
-  "name": "new-boy",
+  "name": "new_boy",
   "version": "0.0.1",
   "description": "微信机器人客户端",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win",
-    "pack": "electron-builder --dir"
+    "pack": "electron-builder --dir",
+    "make": "electron-builder --win"
   },
   "build": {
     "appId": "com.newboy.app",
