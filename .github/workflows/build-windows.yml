@@ -18,13 +18,6 @@ jobs:
       with:
         fetch-depth: 0
     
-    # 下载微信安装包
-    - name: Download WeChat Setup
-      shell: powershell
-      run: |
-        $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -Uri "https://dldir1.qq.com/weixin/Windows/WeChatSetup-3.9.11.25.exe" -OutFile "WeChatSetup-3.9.11.25.exe"
-    
     # 设置 Node.js 环境
     - name: Setup Node.js
       uses: actions/setup-node@v3
@@ -47,7 +40,7 @@ jobs:
         
     # 创建版本号（如果不是 tag 触发）
     - name: Generate version
-      if: "!startsWith(github.ref, 'refs/tags/')"
+      if: ${{ !startsWith(github.ref, 'refs/tags/') }}
       id: version
       run: |
         echo "version=$(date +'%Y.%m.%d.%H%M')" >> $GITHUB_OUTPUT
@@ -65,5 +58,4 @@ jobs:
         prerelease: false
         files: |
           dist/**/*.exe
-          dist/**/*.msi
-          WeChatSetup-3.9.11.25.exe 
+          dist/**/*.msi 
