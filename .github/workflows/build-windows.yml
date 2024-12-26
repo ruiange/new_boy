@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*' # 当推送版本标签时触发
+  workflow_dispatch: # 添加手动触发选项
 
 jobs:
   build:
@@ -11,6 +12,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # 确保能获取到标签
     
     # 下载微信安装包
     - name: Download WeChat Setup
@@ -19,7 +22,7 @@ jobs:
         $ProgressPreference = 'SilentlyContinue'
         Invoke-WebRequest -Uri "https://dldir1.qq.com/weixin/Windows/WeChatSetup-3.9.11.25.exe" -OutFile "WeChatSetup-3.9.11.25.exe"
     
-    # 设置 Node.js 环境（如果是 Node.js 项目）
+    # 设置 Node.js 环境
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
@@ -33,10 +36,6 @@ jobs:
     # 构建应用
     - name: Build application
       run: npm run build
-        
-    # 使用 electron-builder 打包（如果是 Electron 应用）
-    - name: Build installer
-      run: npm run make
         
     # 发布 Release
     - name: Create Release
