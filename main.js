@@ -2,9 +2,21 @@ const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
+const express = require('express');
+const bodyParser = require('body-parser');
+
+// 创建Express应用
+const expressApp = express();
+const PORT = 3000;
+
+// 使用中间件解析JSON
+expressApp.use(bodyParser.json());
+
+// 存储主窗口的引用
+let mainWindow;
 
 function createWindow () {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
@@ -18,11 +30,11 @@ function createWindow () {
   const menu = Menu.buildFromTemplate([])
   Menu.setApplicationMenu(menu)
 
-  win.setMenuBarVisibility(false);
+  mainWindow.setMenuBarVisibility(false);
 
-  win.loadFile('index.html');
+  mainWindow.loadFile('index.html');
   //win.webContents.openDevTools();
-  return win;
+  return mainWindow;
 }
 
 function ensureUserDataPath() {
@@ -105,6 +117,37 @@ function runPythonScript(win) {
 app.whenReady().then(() => {
   const win = createWindow();
   runPythonScript(win);
+  
+  // 启动Express服务器
+  expressApp.listen(PORT, () => {
+    console.log(`Express服务器运行在 http://localhost:${PORT}`);
+  });
+  
+  // API路由
+  expressApp.post('/send-message', (req, res) => {
+    const { to, message } = req.body;
+    if (!to || !message) {
+      return res.status(400).json({ error: '缺少必要参数' });
+    }
+    
+    // 转发消息到渲染进程
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('send-message', { to, message });
+      res.json({ success: true, message: '消息已发送' });
+    } else {
+      res.status(500).json({ error: '主窗口未准备好' });
+    }
+  });
+  
+  // 获取机器人状态
+  expressApp.get('/status', (req, res) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('get-status');
+      res.json({ status: 'running' });
+    } else {
+      res.status(500).json({ error: '主窗口未准备好' });
+    }
+  });
 });
 
 app.on('window-all-closed', () => {
