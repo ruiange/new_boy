@@ -9,9 +9,43 @@
       <div class="message-section">
         <h2>发送消息</h2>
         <div class="input-group">
-          <input v-model="wxid" placeholder="请输入接收者wxid">
-          <textarea v-model="message" placeholder="请输入消息内容"></textarea>
-          <button @click="sendMessage">发送</button>
+          <!-- 接收者输入框 -->
+          <div class="input-item">
+            <label>接收者：</label>
+            <input 
+              v-model="messageForm.recipient" 
+              placeholder="请输入接收者wxid或群id" 
+              :disabled="sending"
+            >
+          </div>
+          
+          <!-- 消息内容输入框 -->
+          <div class="input-item">
+            <label>消息内容：</label>
+            <textarea 
+              v-model="messageForm.content" 
+              placeholder="请输入消息内容" 
+              :disabled="sending"
+            ></textarea>
+          </div>
+          
+          <!-- @用户输入框 -->
+          <div class="input-item">
+            <label>@用户（可选）：</label>
+            <input 
+              v-model="messageForm.atUsers" 
+              placeholder="多个用户用逗号分隔，@所有人输入 notify@all" 
+              :disabled="sending"
+            >
+          </div>
+
+          <!-- 发送按钮 -->
+          <button 
+            @click="sendMessage" 
+            :disabled="sending || !messageForm.recipient || !messageForm.content"
+          >
+            {{ sending ? '发送中...' : '发送' }}
+          </button>
         </div>
       </div>
       <div class="log-section">
@@ -31,10 +65,14 @@ export default {
   name: 'Home',
   data() {
     return {
-      status: '未知',
-      wxid: '',
-      message: '',
-      logs: []
+      status: '正在连接...',
+      messageForm: {
+        recipient: '',    // 接收者
+        content: '',      // 消息内容
+        atUsers: ''       // @用户列表
+      },
+      logs: [],
+      sending: false
     }
   },
   computed: {
@@ -51,6 +89,9 @@ export default {
           case 'info':
             color = 'blue';
             break;
+          case 'success':
+            color = 'green';
+            break;
           default:
             color = 'black';
         }
@@ -60,60 +101,131 @@ export default {
   },
   methods: {
     async sendMessage() {
-      if (!this.wxid || !this.message) {
-        alert('请填写完整信息');
+      if (!this.messageForm.recipient || !this.messageForm.content) {
+        this.addLog('请填写接收者和消息内容', 'error');
         return;
       }
-      
+
       try {
-        const response = await fetch('http://localhost:3000/send-message', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            to: this.wxid,
-            message: this.message
-          })
-        });
+        this.sending = true;
         
-        const data = await response.json();
-        if (data.success) {
-          alert('消息发送成功');
-          this.message = ''; // 清空消息输入框
+        // 准备发送的消息数据
+        const messageData = {
+          recipient: this.messageForm.recipient.trim(),
+          content: this.messageForm.content.trim(),
+          atUsers: this.messageForm.atUsers.trim() || undefined
+        };
+
+        // 记录发送日志
+        this.addLog(`准备发送消息：`, 'info');
+        this.addLog(`接收者: ${messageData.recipient}`, 'info');
+        this.addLog(`内容: ${messageData.content}`, 'info');
+        if (messageData.atUsers) {
+          this.addLog(`@用户: ${messageData.atUsers}`, 'info');
+        }
+
+        let timeoutId;
+        const timeout = new Promise((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('发送消息超时，请检查微信连接状态')), 60000); // 增加到60秒
+        });
+
+        const sendPromise = new Promise((resolve) => {
+          const responseHandler = (event, response) => {
+            clearTimeout(timeoutId); // 清除超时计时器
+            ipcRenderer.removeListener('send-wx-message-response', responseHandler);
+            resolve(response);
+          };
+          
+          ipcRenderer.once('send-wx-message-response', responseHandler);
+          ipcRenderer.send('send-wx-message', messageData);
+        });
+
+        // 等待响应或超时
+        const response = await Promise.race([sendPromise, timeout]);
+        
+        if (response.success) {
+          this.addLog('消息发送成功！', 'success');
+          this.clearForm();
         } else {
-          alert('发送失败: ' + data.error);
+          throw new Error(response.error || '未知错误');
         }
       } catch (error) {
-        alert('发送失败: ' + error.message);
+        this.addLog(`消息发送失败: ${error.message}`, 'error');
+        if (error.code) {
+          this.addLog(`错误代码: ${error.code}`, 'error');
+        }
+      } finally {
+        this.sending = false;
       }
     },
+
+    addLog(message, type = 'info') {
+      this.logs.push({
+        type,
+        message: message + '\n'
+      });
+      this.$nextTick(this.scrollToBottom);
+    },
+
     scrollToBottom() {
       if (this.$refs.logContainer) {
         this.$refs.logContainer.scrollTop = this.$refs.logContainer.scrollHeight;
       }
+    },
+
+    updateStatus() {
+      ipcRenderer.send('get-wx-status');
+    },
+
+    clearForm() {
+      this.messageForm.content = '';
+      this.messageForm.atUsers = '';
+      // 保留接收者以便连续发送
     }
   },
   mounted() {
     // 监听Python进程的日志
     ipcRenderer.on('python-log', (event, log) => {
-      this.logs.push(log);
-      this.$nextTick(this.scrollToBottom);
+      this.addLog(log.message, log.type);
+
+      // 更新状态
+      if (log.message.includes('微信已连接')) {
+        this.status = '已连接';
+      } else if (log.message.includes('等待微信登录超时') || log.message.includes('微信未连接')) {
+        this.status = '未连接';
+      } else if (log.message.includes('正在等待微信连接')) {
+        this.status = '正在连接...';
+      }
     });
 
-    // 获取初始状态
-    fetch('http://localhost:3000/status')
-      .then(response => response.json())
-      .then(data => {
-        this.status = data.status;
-      })
-      .catch(error => {
-        this.status = '连接失败';
-      });
+    // 监听消息发送响应
+    ipcRenderer.on('send-wx-message-response', (event, response) => {
+      this.sending = false;
+      
+      if (response.success) {
+        this.addLog('消息发送成功！', 'success');
+        this.clearForm();
+      } else {
+        this.addLog(`消息发送失败: ${response.error}`, 'error');
+      }
+    });
+
+    // 监听状态更新响应
+    ipcRenderer.on('wx-status-response', (event, status) => {
+      this.status = status;
+    });
+
+    // 初始化时请求状态
+    this.updateStatus();
+
+    // 定期更新状态（每30秒）
+    setInterval(this.updateStatus, 30000);
   },
   beforeUnmount() {
     // 清理事件监听
     ipcRenderer.removeAllListeners('python-log');
+    ipcRenderer.removeAllListeners('send-wx-message-response');
+    ipcRenderer.removeAllListeners('wx-status-response');
   }
 }
 </script>
@@ -139,14 +251,26 @@ export default {
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 15px;
+}
+
+.input-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.input-item label {
+  font-size: 14px;
+  color: #666;
 }
 
 input, textarea {
-  padding: 8px;
+  padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
+  width: 100%;
 }
 
 textarea {
@@ -158,14 +282,26 @@ button {
   background: #42b983;
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 12px 20px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s;
 }
 
-button:hover {
+button:hover:not(:disabled) {
   background: #3aa876;
+}
+
+button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+input:disabled, textarea:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
 }
 
 .log-container {
@@ -204,4 +340,4 @@ button:hover {
 .log-container::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
-</style> 
+</style>

@@ -1,0 +1,18 @@
+groups:
+  enable: []  # 允许响应的群 roomId 列表
+  keywords:  # 群消息关键词
+    - "机器人"
+    - "帮助"
+    - "help"
+  
+private:
+  enable: true  # 是否允许私聊
+  keywords:  # 私聊关键词
+    - "机器人"
+    - "帮助"
+    - "help"
+
+commands:  # 命令配置
+  prefix: "/"  # 命令前缀
+  help: true  # 是否启用帮助命令
+  status: true  # 是否启用状态命令 

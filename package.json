@@ -6,7 +6,9 @@
   "author": "bombi",
   "scripts": {
     "start": "cross-env NODE_ENV=production electron .",
-    "dev": "concurrently \"cross-env NODE_ENV=development VITE_DEV_SERVER_URL=http://localhost:5173 vite\" \"cross-env NODE_ENV=development VITE_DEV_SERVER_URL=http://localhost:5173 electron .\"",
+    "dev:vite": "cross-env NODE_ENV=development VITE_DEV_SERVER_URL=http://localhost:5173 vite",
+    "dev:electron": "cross-env NODE_ENV=development VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
+    "dev": "concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
     "build": "cross-env NODE_ENV=production vite build && electron-builder --windows --x64",
     "preview": "vite preview",
     "pack": "electron-builder --dir",
