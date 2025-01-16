@@ -3,10 +3,12 @@
   "version": "0.0.12",
   "description": "微信机器人客户端",
   "main": "main.js",
+  "author": "bombi",
   "scripts": {
-    "start": "electron .",
-    "dev": "electron .",
-    "build": "electron-builder --windows --x64",
+    "start": "cross-env NODE_ENV=production electron .",
+    "dev": "concurrently \"cross-env NODE_ENV=development VITE_DEV_SERVER_URL=http://localhost:5173 vite\" \"cross-env NODE_ENV=development VITE_DEV_SERVER_URL=http://localhost:5173 electron .\"",
+    "build": "cross-env NODE_ENV=production vite build && electron-builder --windows --x64",
+    "preview": "vite preview",
     "pack": "electron-builder --dir",
     "make": "electron-builder --windows --x64"
   },
@@ -24,8 +26,7 @@
             "x64"
           ]
         }
-      ],
-      "icon": "assets/icon.ico"
+      ]
     },
     "nsis": {
       "oneClick": false,
@@ -34,8 +35,6 @@
       "createStartMenuShortcut": true,
       "shortcutName": "新男孩",
       "perMachine": false,
-      "installerIcon": "assets/icon.ico",
-      "uninstallerIcon": "assets/icon.ico",
       "artifactName": "setup-${version}.exe"
     },
     "files": [
@@ -62,11 +61,18 @@
     "asar": false
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/compiler-sfc": "^3.5.13",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
     "electron": "^27.1.3",
-    "electron-builder": "^24.13.3"
+    "electron-builder": "^24.13.3",
+    "vite": "^6.0.7"
   },
   "dependencies": {
     "body-parser": "^1.20.3",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
   }
 }

@@ -16,25 +16,47 @@ expressApp.use(bodyParser.json());
 let mainWindow;
 
 function createWindow () {
-  mainWindow = new BrowserWindow({
+  const win = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      enableRemoteModule: true
+      webSecurity: false,
+      allowRunningInsecureContent: true
     }
   });
+
+  mainWindow = win;  // 保存窗口引用
 
   // 创建空菜单来替换默认菜单
   const menu = Menu.buildFromTemplate([])
   Menu.setApplicationMenu(menu)
 
-  mainWindow.setMenuBarVisibility(false);
+  win.setMenuBarVisibility(false);
+  
+  // 始终打开开发者工具便于调试
+  win.webContents.openDevTools();
 
-  mainWindow.loadFile('index.html');
-  //win.webContents.openDevTools();
-  return mainWindow;
+  // 添加加载事件监听
+  win.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('页面加载失败:', errorCode, errorDescription);
+  });
+
+  win.webContents.on('did-finish-load', () => {
+    console.log('页面加载完成');
+  });
+
+  // 根据环境加载不同的URL
+  if (process.env.NODE_ENV === 'development') {
+    console.log('开发环境：加载 http://localhost:5173');
+    win.loadURL('http://localhost:5173');
+  } else {
+    console.log('生产环境：加载', path.join(__dirname, 'dist', 'index.html'));
+    win.loadFile(path.join(__dirname, 'dist', 'index.html'));
+  }
+
+  return win;
 }
 
 function ensureUserDataPath() {
@@ -89,26 +111,38 @@ function runPythonScript(win) {
     // 添加输出处理
     pythonProcess.stdout.on('data', (data) => {
       if (win && !win.isDestroyed()) {
-        win.webContents.send('log', data.toString());
+        win.webContents.send('python-log', {
+          type: 'stdout',
+          message: data.toString()
+        });
       }
     });
 
     pythonProcess.stderr.on('data', (data) => {
       if (win && !win.isDestroyed()) {
-        win.webContents.send('log', data.toString());
+        win.webContents.send('python-log', {
+          type: 'stderr',
+          message: data.toString()
+        });
       }
     });
 
     pythonProcess.on('error', (error) => {
       if (win && !win.isDestroyed()) {
-        win.webContents.send('log', `Python进程错误: ${error.message}`);
+        win.webContents.send('python-log', {
+          type: 'error',
+          message: `Python进程错误: ${error.message}`
+        });
       }
     });
 
     return pythonProcess;
   } catch (error) {
     if (win && !win.isDestroyed()) {
-      win.webContents.send('log', `启动Python失败: ${error.message}`);
+      win.webContents.send('python-log', {
+        type: 'error',
+        message: `启动Python失败: ${error.message}`
+      });
     }
     throw error;
   }
@@ -121,6 +155,12 @@ app.whenReady().then(() => {
   // 启动Express服务器
   expressApp.listen(PORT, () => {
     console.log(`Express服务器运行在 http://localhost:${PORT}`);
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('python-log', {
+        type: 'info',
+        message: `Express服务器运行在 http://localhost:${PORT}`
+      });
+    }
   });
   
   // API路由
